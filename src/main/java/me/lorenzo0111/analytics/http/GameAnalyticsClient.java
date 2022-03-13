@@ -6,7 +6,6 @@ import com.google.gson.JsonObject;
 import me.lorenzo0111.analytics.Analytics;
 import okhttp3.*;
 import org.apache.commons.codec.binary.Base64;
-import org.bukkit.Bukkit;
 import org.jetbrains.annotations.NotNull;
 
 import javax.crypto.Mac;
@@ -33,30 +32,38 @@ public class GameAnalyticsClient {
 
     public void startSession(UUID player) {
         UUID sessionId = sessions.computeIfAbsent(player, k -> UUID.randomUUID());
+        int session = getSession(sessionId);
 
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-            int session = getSession(sessionId);
-
-            JsonObject event = prepareRequest(sessionId,session);
-            event.addProperty("category", "user");
-            simpleCall(sendEvent(event));
-        });
+        JsonObject event = prepareRequest(sessionId,session);
+        event.addProperty("category", "user");
+        simpleCall(sendEvent(event));
     }
 
     public void closeSession(UUID player, long time) {
         final UUID sessionId = sessions.computeIfAbsent(player, k -> UUID.randomUUID());
+        int session = getSession(sessionId);
 
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-            int session = getSession(sessionId);
+        JsonObject event = prepareRequest(sessionId, session);
+        event.addProperty("category", "session_end");
+        event.addProperty("length", time);
+        simpleCall(sendEvent(event));
 
-            JsonObject event = prepareRequest(sessionId, session);
-            event.addProperty("category", "session_end");
-            event.addProperty("length", time);
-            simpleCall(sendEvent(event));
+        sessions.remove(player, sessionId);
+        sessionNum.remove(sessionId);
+    }
 
-            sessions.remove(player, sessionId);
-            sessionNum.remove(sessionId);
-        });
+    public void processShop(UUID player, String item, int price, String currency, int id) {
+        final UUID sessionId = sessions.computeIfAbsent(player, k -> UUID.randomUUID());
+        int session = getSession(sessionId);
+
+        JsonObject event = prepareRequest(sessionId, session);
+        event.addProperty("category", "business");
+        event.addProperty("event_id", "item:" + item);
+        event.addProperty("amount", price);
+        event.addProperty("currency", currency);
+        event.addProperty("transaction_num", id);
+
+        simpleCall(sendEvent(event));
     }
 
     @NotNull

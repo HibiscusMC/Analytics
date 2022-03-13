@@ -17,10 +17,12 @@ repositories {
         name = 'sonatype'
         url = 'https://oss.sonatype.org/content/groups/public/'
     }
+    maven { url 'https://jitpack.io' }
 }
 
 dependencies {
     compileOnly 'org.spigotmc:spigot-api:1.18.1-R0.1-SNAPSHOT'
+    compileOnly 'com.github.CraftingStore.MinecraftPlugin:bukkit:master-SNAPSHOT'
     implementation 'com.squareup.okhttp3:okhttp:4.9.3'
     implementation 'commons-codec:commons-codec:1.15'
     implementation 'org.xerial:sqlite-jdbc:3.36.0.3'
@@ -45,3 +47,5 @@ shadowJar {
 runServer {
     minecraftVersion('1.18.2')
 }
+
+tasks.build.dependsOn tasks.shadowJar

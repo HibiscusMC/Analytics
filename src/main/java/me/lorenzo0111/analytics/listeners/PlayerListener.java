@@ -1,6 +1,8 @@
 package me.lorenzo0111.analytics.listeners;
 
 import me.lorenzo0111.analytics.Analytics;
+import net.craftingstore.bukkit.events.DonationReceivedEvent;
+import net.craftingstore.core.models.donation.Donation;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -33,5 +35,12 @@ public class PlayerListener implements Listener {
 
         plugin.getClient().closeSession(event.getPlayer().getUniqueId(), playTime);
         playTimes.remove(event.getPlayer().getUniqueId());
+    }
+
+    @EventHandler
+    public void onDonation(@NotNull DonationReceivedEvent event) {
+        Donation donation = event.getDonation();
+
+        plugin.getClient().processShop(donation.getPlayer().getUUID(), donation.getPackage().getName(), donation.getPackage().getPriceInCents(), "USD", donation.getPaymentId());
     }
 }
