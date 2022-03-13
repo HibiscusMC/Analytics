@@ -11,11 +11,9 @@ import org.jetbrains.annotations.NotNull;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
-public class GameAnalyticsClient {
+public class GameAnalyticsClient implements Runnable{
     private final MediaType json = MediaType.parse("application/json; charset=utf-8");
     private final OkHttpClient httpClient = new OkHttpClient();
     private final String gameKey;
@@ -23,6 +21,7 @@ public class GameAnalyticsClient {
     private final Map<UUID,UUID> sessions = new HashMap<>();
     private final Map<UUID,Integer> sessionNum = new HashMap<>();
     private final Analytics plugin;
+    private final List<JsonObject> queue = new ArrayList<>();
 
     public GameAnalyticsClient(Analytics plugin, String gameKey, String secretKey) {
         this.plugin = plugin;
@@ -36,7 +35,8 @@ public class GameAnalyticsClient {
 
         JsonObject event = prepareRequest(sessionId,session);
         event.addProperty("category", "user");
-        simpleCall(sendEvent(event));
+
+        queueEvent(event);
     }
 
     public void closeSession(UUID player, long time) {
@@ -63,7 +63,7 @@ public class GameAnalyticsClient {
         event.addProperty("currency", currency);
         event.addProperty("transaction_num", id);
 
-        simpleCall(sendEvent(event));
+        queueEvent(event);
     }
 
     @NotNull
@@ -92,6 +92,10 @@ public class GameAnalyticsClient {
         } catch(Exception ex) {
             return "";
         }
+    }
+
+    public void queueEvent(JsonObject event) {
+        queue.add(event);
     }
 
     @NotNull
@@ -143,5 +147,18 @@ public class GameAnalyticsClient {
         }
 
         return sessionNum.get(sessionId);
+    }
+
+    @Override
+    public void run() {
+        if (!queue.isEmpty()) {
+            JsonArray array = new JsonArray();
+            for (JsonObject event : queue) {
+                array.add(event);
+            }
+
+            queue.clear();
+            sendEvents(array);
+        }
     }
 }

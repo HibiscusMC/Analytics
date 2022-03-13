@@ -5,3 +5,4 @@ api-version: 1.13
 authors: [ Lorenzo0111 ]
 depend:
   - CraftingStore
+  - PlaceholderAPI

@@ -2,10 +2,10 @@ package me.lorenzo0111.analytics;
 
 import me.lorenzo0111.analytics.http.GameAnalyticsClient;
 import me.lorenzo0111.analytics.listeners.PlayerListener;
+import me.lorenzo0111.analytics.papi.PapiHook;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.sql.Connection;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public final class Analytics extends JavaPlugin {
@@ -15,11 +15,16 @@ public final class Analytics extends JavaPlugin {
     @Override
     public void onEnable() {
         this.saveDefaultConfig();
-        this.sessionNum = new AtomicInteger(this.getConfig().getInt("sessionNum"));
 
+        this.sessionNum = new AtomicInteger(this.getConfig().getInt("sessionNum"));
         this.client = new GameAnalyticsClient(this, this.getConfig().getString("gameKey"), this.getConfig().getString("secretKey"));
 
         Bukkit.getPluginManager().registerEvents(new PlayerListener(this), this);
+        Bukkit.getScheduler().runTaskTimerAsynchronously(this, client, 0, 20 * 20);
+
+        new PapiHook(this);
+
+        this.getLogger().info("Analytics started successfully!");
     }
 
     @Override
