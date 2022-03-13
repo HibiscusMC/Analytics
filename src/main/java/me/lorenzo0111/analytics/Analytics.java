@@ -5,43 +5,17 @@ import me.lorenzo0111.analytics.listeners.PlayerListener;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.io.File;
 import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public final class Analytics extends JavaPlugin {
     private GameAnalyticsClient client;
-    private Connection connection;
+    private AtomicInteger sessionNum;
 
     @Override
     public void onEnable() {
         this.saveDefaultConfig();
-
-        File file = new File(this.getDataFolder(), "database.db");
-        if (!file.exists()) {
-            this.getLogger().info("Creating database...");
-            try {
-                file.createNewFile();
-            } catch (Exception e) {
-                this.getLogger().severe("Could not create database!");
-                e.printStackTrace();
-                this.setEnabled(false);
-                return;
-            }
-        }
-
-        try {
-            this.connection = DriverManager.getConnection("jdbc:sqlite:" + file.getAbsolutePath());
-            Statement statement = connection.createStatement();
-            statement.executeUpdate("CREATE TABLE IF NOT EXISTS players (uuid TEXT, id INTEGER PRIMARY KEY AUTOINCREMENT);");
-        } catch (SQLException e) {
-            this.getLogger().severe("Could not connect to the database!");
-            e.printStackTrace();
-            this.setEnabled(false);
-            return;
-        }
+        this.sessionNum = new AtomicInteger(this.getConfig().getInt("sessionNum"));
 
         this.client = new GameAnalyticsClient(this, this.getConfig().getString("gameKey"), this.getConfig().getString("secretKey"));
 
@@ -50,16 +24,14 @@ public final class Analytics extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        try {
-            if (connection != null) connection.close();
-        } catch (SQLException ignored) {}
+        this.getConfig().set("sessionNum", this.sessionNum.get());
     }
 
     public GameAnalyticsClient getClient() {
         return client;
     }
 
-    public Connection getConnection() {
-        return connection;
+    public AtomicInteger getSessionNum() {
+        return sessionNum;
     }
 }

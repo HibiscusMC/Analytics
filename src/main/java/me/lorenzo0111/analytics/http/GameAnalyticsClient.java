@@ -12,9 +12,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -24,6 +21,7 @@ public class GameAnalyticsClient {
     private final OkHttpClient httpClient = new OkHttpClient();
     private final String gameKey;
     private final String secretKey;
+    private final Map<UUID,UUID> sessions = new HashMap<>();
     private final Map<UUID,Integer> sessionNum = new HashMap<>();
     private final Analytics plugin;
 
@@ -33,35 +31,30 @@ public class GameAnalyticsClient {
         this.secretKey = secretKey;
     }
 
-    public void startSession(UUID sessionId) {
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-            try {
-                int session = getSession(sessionId);
+    public void startSession(UUID player) {
+        UUID sessionId = sessions.computeIfAbsent(player, k -> UUID.randomUUID());
 
-                JsonObject event = prepareRequest(sessionId,session);
-                event.addProperty("category", "user");
-                simpleCall(sendEvent(event));
-            } catch (SQLException e) {
-                plugin.getLogger().severe("Failed to start session");
-                e.printStackTrace();
-            }
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            int session = getSession(sessionId);
+
+            JsonObject event = prepareRequest(sessionId,session);
+            event.addProperty("category", "user");
+            simpleCall(sendEvent(event));
         });
     }
 
-    public void closeSession(UUID sessionId, long time) {
+    public void closeSession(UUID player, long time) {
+        final UUID sessionId = sessions.computeIfAbsent(player, k -> UUID.randomUUID());
+
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-            try {
-                int session = getSession(sessionId);
+            int session = getSession(sessionId);
 
-                JsonObject event = prepareRequest(sessionId, session);
-                event.addProperty("category", "session_end");
-                event.addProperty("length", time);
-                simpleCall(sendEvent(event));
-            } catch (SQLException e) {
-                plugin.getLogger().severe("Failed to close session");
-                e.printStackTrace();
-            }
+            JsonObject event = prepareRequest(sessionId, session);
+            event.addProperty("category", "session_end");
+            event.addProperty("length", time);
+            simpleCall(sendEvent(event));
 
+            sessions.remove(player, sessionId);
             sessionNum.remove(sessionId);
         });
     }
@@ -137,25 +130,11 @@ public class GameAnalyticsClient {
         });
     }
 
-    private int getSession(UUID sessionId) throws SQLException {
-        if (sessionNum.containsKey(sessionId)) {
-            return sessionNum.get(sessionId);
+    private int getSession(UUID sessionId) {
+        if (!sessionNum.containsKey(sessionId)) {
+            sessionNum.put(sessionId, plugin.getSessionNum().incrementAndGet());
         }
 
-        PreparedStatement statement = plugin.getConnection()
-                .prepareStatement("SELECT * FROM players WHERE uuid = ?");
-
-        statement.setString(1, sessionId.toString());
-        ResultSet resultSet = statement.executeQuery();
-        if(resultSet.next()) {
-            sessionNum.put(sessionId, resultSet.getInt("id"));
-        } else {
-            PreparedStatement insert = plugin.getConnection()
-                    .prepareStatement("INSERT INTO players (uuid) VALUES (?)");
-            insert.setString(1, sessionId.toString());
-            insert.executeUpdate();
-        }
-
-        return getSession(sessionId);
+        return sessionNum.get(sessionId);
     }
 }
