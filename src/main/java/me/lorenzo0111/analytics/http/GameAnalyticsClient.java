@@ -151,11 +151,15 @@ public class GameAnalyticsClient implements Runnable{
 
     @Override
     public void run() {
+        plugin.getLogger().info("Sending events");
+
         if (!queue.isEmpty()) {
             JsonArray array = new JsonArray();
             for (JsonObject event : queue) {
                 array.add(event);
             }
+
+            plugin.getLogger().info("Sending: " + array.size() + " events");
 
             queue.clear();
             sendEvents(array);
