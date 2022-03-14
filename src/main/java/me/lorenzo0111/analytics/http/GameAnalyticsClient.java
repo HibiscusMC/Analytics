@@ -33,7 +33,7 @@ public class GameAnalyticsClient implements Runnable{
         UUID sessionId = sessions.computeIfAbsent(player, k -> UUID.randomUUID());
         int session = getSession(sessionId);
 
-        JsonObject event = prepareRequest(sessionId,session);
+        JsonObject event = prepareRequest(sessionId, player, session);
         event.addProperty("category", "user");
 
         queueEvent(event);
@@ -43,7 +43,7 @@ public class GameAnalyticsClient implements Runnable{
         final UUID sessionId = sessions.computeIfAbsent(player, k -> UUID.randomUUID());
         int session = getSession(sessionId);
 
-        JsonObject event = prepareRequest(sessionId, session);
+        JsonObject event = prepareRequest(sessionId, player, session);
         event.addProperty("category", "session_end");
         event.addProperty("length", time);
         simpleCall(sendEvent(event));
@@ -56,7 +56,7 @@ public class GameAnalyticsClient implements Runnable{
         final UUID sessionId = sessions.computeIfAbsent(player, k -> UUID.randomUUID());
         int session = getSession(sessionId);
 
-        JsonObject event = prepareRequest(sessionId, session);
+        JsonObject event = prepareRequest(sessionId, player, session);
         event.addProperty("category", "business");
         event.addProperty("event_id", "item:" + item);
         event.addProperty("amount", price);
@@ -67,14 +67,14 @@ public class GameAnalyticsClient implements Runnable{
     }
 
     @NotNull
-    private JsonObject prepareRequest(@NotNull UUID sessionId, int session) {
+    private JsonObject prepareRequest(@NotNull UUID sessionId, UUID userId, int session) {
         JsonObject event = new JsonObject();
         event.addProperty("platform", "ios");
         event.addProperty("os_version", "ios 8.1");
         event.addProperty("device", "iPhone6.1");
         event.addProperty("manufacturer", "apple");
         event.addProperty("sdk_version", "rest api v2");
-        event.addProperty("user_id", sessionId.toString());
+        event.addProperty("user_id", userId.toString());
         event.addProperty("session_id", sessionId.toString());
         event.addProperty("session_num", session);
         event.addProperty("v", 2);
