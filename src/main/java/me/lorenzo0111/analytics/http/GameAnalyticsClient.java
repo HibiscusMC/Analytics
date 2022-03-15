@@ -13,7 +13,7 @@ import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
 import java.util.*;
 
-public class GameAnalyticsClient implements Runnable{
+public class GameAnalyticsClient {
     private final MediaType json = MediaType.parse("application/json; charset=utf-8");
     private final OkHttpClient httpClient = new OkHttpClient();
     private final String gameKey;
@@ -21,7 +21,6 @@ public class GameAnalyticsClient implements Runnable{
     private final Map<UUID,UUID> sessions = new HashMap<>();
     private final Map<UUID,Integer> sessionNum = new HashMap<>();
     private final Analytics plugin;
-    private final List<JsonObject> queue = new ArrayList<>();
 
     public GameAnalyticsClient(Analytics plugin, String gameKey, String secretKey) {
         this.plugin = plugin;
@@ -36,7 +35,7 @@ public class GameAnalyticsClient implements Runnable{
         JsonObject event = prepareRequest(sessionId, player, session);
         event.addProperty("category", "user");
 
-        queueEvent(event);
+        simpleCall(sendEvent(event));
     }
 
     public void closeSession(UUID player, long time) {
@@ -63,7 +62,7 @@ public class GameAnalyticsClient implements Runnable{
         event.addProperty("currency", currency);
         event.addProperty("transaction_num", id);
 
-        queueEvent(event);
+        simpleCall(sendEvent(event));
     }
 
     @NotNull
@@ -92,10 +91,6 @@ public class GameAnalyticsClient implements Runnable{
         } catch(Exception ex) {
             return "";
         }
-    }
-
-    public void queueEvent(JsonObject event) {
-        queue.add(event);
     }
 
     @NotNull
@@ -147,22 +142,5 @@ public class GameAnalyticsClient implements Runnable{
         }
 
         return sessionNum.get(sessionId);
-    }
-
-    @Override
-    public void run() {
-        plugin.getLogger().info("Sending events");
-
-        if (!queue.isEmpty()) {
-            JsonArray array = new JsonArray();
-            for (JsonObject event : queue) {
-                array.add(event);
-            }
-
-            plugin.getLogger().info("Sending: " + array.size() + " events");
-
-            queue.clear();
-            sendEvents(array);
-        }
     }
 }

@@ -20,7 +20,6 @@ public final class Analytics extends JavaPlugin {
         this.client = new GameAnalyticsClient(this, this.getConfig().getString("gameKey"), this.getConfig().getString("secretKey"));
 
         Bukkit.getPluginManager().registerEvents(new PlayerListener(this), this);
-        Bukkit.getScheduler().runTaskTimerAsynchronously(this, client, 0, 20 * 20);
 
         new PapiHook(this);
 
