@@ -17,7 +17,7 @@ repositories {
 
 dependencies {
     compileOnly("org.spigotmc:spigot-api:1.18.1-R0.1-SNAPSHOT")
-    compileOnly("com.github.CraftingStore.MinecraftPlugin:bukkit:master-SNAPSHOT")
+    //compileOnly("com.github.CraftingStore.MinecraftPlugin:bukkit:master-SNAPSHOT")
     compileOnly("me.clip:placeholderapi:2.11.1")
     implementation("com.squareup.okhttp3:okhttp:4.9.3")
     implementation("commons-codec:commons-codec:1.15")

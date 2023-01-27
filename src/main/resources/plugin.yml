@@ -4,5 +4,5 @@ main: me.lorenzo0111.analytics.Analytics
 api-version: 1.13
 authors: [ Lorenzo0111 ]
 depend:
-  - CraftingStore
+  #- CraftingStore
   - PlaceholderAPI

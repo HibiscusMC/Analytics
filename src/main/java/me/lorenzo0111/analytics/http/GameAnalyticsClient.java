@@ -51,6 +51,7 @@ public class GameAnalyticsClient {
         sessionNum.remove(sessionId);
     }
 
+    /*
     public void processShop(UUID player, String item, int price, String currency, int id) {
         final UUID sessionId = sessions.computeIfAbsent(player, k -> UUID.randomUUID());
         int session = getSession(sessionId);
@@ -64,6 +65,7 @@ public class GameAnalyticsClient {
 
         simpleCall(sendEvent(event));
     }
+     */
 
     @NotNull
     private JsonObject prepareRequest(@NotNull UUID sessionId, UUID userId, int session) {
